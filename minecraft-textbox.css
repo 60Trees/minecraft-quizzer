@@ -1,0 +1,26 @@
+.mc-textbox {
+    color: #ffffff;
+    caret-color: #34f000;
+    font-family: 'Minecraft';
+    font-size: large;
+
+    outline: 4px solid #1e1e1f;
+
+    border: 0px;
+    border-top: 8px solid #242425;
+
+    padding-bottom: 8px;
+    padding-left: 8px;
+
+    box-sizing: border-box; /* Ensures border and padding are included in the element's dimensions */
+    background-color: #313233;
+    width: 100%;
+    margin: 4px;
+}
+.mc-textbox:focus::placeholder {
+    color: #313131; /* Change to your desired color */
+}
+.mc-textbox:focus::selection {
+    background: #0dc000; /* Change the background color of selected text */
+    color: #0d0d0d;       /* Change the color of selected text */
+  }

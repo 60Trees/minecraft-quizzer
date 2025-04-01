@@ -1,0 +1,130 @@
+/* Green */
+    :root {
+        --green-button-outer-border-default: #1e1e1f;
+        --green-button-outer-border-hover: #1e1e1f;
+        --green-button-outer-border-push: #1e1e1f;
+    }
+    :root {
+        --green-button-text-default: #ffffff;
+        --green-button-text-hover: #ffffff;
+        --green-button-text-push: #ffffff;
+    }
+    :root {
+        --green-button-fill-top-default: #2f7b18;
+        --green-button-fill-top-hover: #2f7b18;
+        --green-button-fill-top-push: #2f7b18;
+    }
+    :root {
+        --green-button-fill-bottom-default: #3a971e;
+        --green-button-fill-bottom-hover: #4ea235;
+        --green-button-fill-bottom-push: #4ea235;
+    }
+    :root {
+        --green-button-inner-border-default: #61ab4a;
+        --green-button-inner-border-hover: #6bb156;
+        --green-button-inner-border-push: #3f9324;
+    }
+    .mc-button-green {
+        font-family: 'MinecraftTen';
+        font-size: x-large;
+        text-shadow: 3px 3px 0px #00000032;
+        border-radius: 0px;
+        position: relative;
+        height: 80px;
+        z-index: 0;
+        transition: 0s;
+        user-select: none;
+        /*box-shadow: 15px 15px 0px rgba(0, 0, 0, 0.5);*/
+    }
+    .mc-button-green.small-button {
+        font-size: medium;
+        height: 41px;
+    }
+    .mc-button-green::before {
+        content: '';
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 8px;
+        z-index: -1;
+        transition: 0s;
+    }
+
+    .mc-button-green {
+        color: var(--green-button-text-default);
+        border: 4px solid var(--green-button-outer-border-default);
+        background-color: var(--green-button-fill-top-default);
+    }
+    .mc-button-green::before {
+        background-color: var(--green-button-fill-bottom-default);
+        border: 4px solid var(--green-button-inner-border-default);
+    }
+    .mc-button-green:hover {
+        color: var(--green-button-text-hover);
+        border: 4px solid var(--green-button-outer-border-hover);
+        background-color: var(--green-button-fill-top-hover);
+    }
+    .mc-button-green:hover::before {
+        background-color: var(--green-button-fill-bottom-hover);
+        border: 4px solid var(--green-button-inner-border-hover);
+    }
+    .mc-button-green:active {
+        height: 72px;
+        transform: translateY(8px);
+        margin-bottom: 8px;
+
+        color: var(--green-button-text-push);
+        border: 4px solid var(--green-button-outer-border-push);
+        background-color: var(--green-button-fill-top-push);
+    }
+    .mc-button-green:active.small-button {
+        height: 33px;
+    }
+    .mc-button-green:active::before {
+        bottom: 0px;
+
+        background-color: var(--green-button-fill-bottom-hover);
+        border: 4px solid var(--green-button-inner-border-hover);
+    }
+/* White */
+    .mc-button-white {
+        font-family: 'Minecraft';
+        color: #000000;
+        font-size: x-large;
+        border: 4px solid #1e1e1f;
+        background-color: #58585a;
+        border-radius: 0px;
+        position: relative;
+        z-index: 0;
+        transition: 0s;
+        user-select: none;
+        /*box-shadow: 15px 15px 0px rgba(0, 0, 0, 0.5);*/
+    }
+    .mc-button-white::before {
+        background-color: #d0d1d4;
+        content: '';
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 8px;
+        border: 4px solid #e3e3e5;
+        z-index: -1;
+        transition: 0s;
+    }
+    .mc-button-white:hover {
+        background-color: #58585a;
+    }
+    .mc-button-white:hover::before {
+        background-color: #b1b2b5;
+        border-color: #e3e3e5;
+    }
+    .mc-button-white:active {
+        height: 72px;
+        transform: translateY(8px);
+        margin-bottom: 8px;
+    }
+    .mc-button-white:active::before {
+        bottom: 0px;
+    }

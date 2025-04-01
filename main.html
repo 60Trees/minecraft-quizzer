@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch HTML</title>
+    <style>
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 60px;
+            background-color: #2f4f4f;
+            overflow-x: hidden;
+            transition: width 0.3s;
+            z-index: 1000;
+        }
+
+        .sidebar.open {
+            width: 250px;
+        }
+
+        .sidebar .toggle-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #235b12;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'MinecraftTen';
+        }
+
+        .sidebar-content {
+            margin-top: 50px;
+            display: none;
+            padding: 10px;
+            color: white;
+            font-family: 'Minecraft';
+        }
+
+        .sidebar.open .sidebar-content {
+            display: block;
+        }
+
+        /* Main content wrapper */
+        .content-wrapper {
+            margin-left: 60px;
+            transition: margin-left 0.3s;
+        }
+
+        .sidebar.open ~ .content-wrapper {
+            margin-left: 250px;
+        }
+
+        body {
+            font-family: 'Minecraft', 'MinecraftTen';
+        }
+    </style>
+    <link rel="stylesheet" href="minecraft-buttons.css">
+    <style>
+        @font-face {
+            font-family: 'MinecraftTen';
+            src: url('minecraft-ten.otf') format('opentype');
+        }
+
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('minecraft.otf') format('opentype');
+        }
+        .mc {
+            font-family: 'MinecraftTen';
+            font-size: larger;
+        }
+        .mc-list-item {
+            padding: 0 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            width: 100%;
+            background-color: #2f4f4f;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            
+            box-sizing: border-box;
+        }
+        .mc-list-item-link {
+            color: white;
+            text-decoration: none;
+        }
+        .mc-list-item-image {
+            width: 60px;
+            height: 60px;
+            filter: drop-shadow(15px 15px 0px #00000080);
+        }
+
+        body {
+            font-family: 'Minecraft', 'MinecraftTen';
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="toggle-btn" id="toggleSidebar">☰</button>
+        <div class="sidebar-content">
+            <p>Sidebar Content</p>
+            <ul>
+                <li><a href="#" class="mc-list-item-link">Link 1</a></li>
+                <li><a href="#" class="mc-list-item-link">Link 2</a></li>
+                <li><a href="#" class="mc-list-item-link">Link 3</a></li>
+            </ul>
+        </div>
+    </div>
+    <!-- Main content wrapper -->
+    <div class="content-wrapper">
+        <button class="mc mc-button-green" id="fetchHtml">
+            <div style="transform: translateY(-4px); display: flex; flex-direction: row; justify-content: center; align-items: center;">
+                <img class="mc-random-blocks">
+                <p style="margin: 0 10px;">New question</p>
+                <img class="mc-random-blocks">
+            </div>
+        </button>
+        <div id="result"></div>
+        <pre id="output" style="display: none;"></pre>
+    </div>
+    <script>
+        // Function to change the mc-random-blocks images every second
+        setInterval(() => {
+            const resultDiv = document.getElementById('result');
+            const images = resultDiv.querySelectorAll('.mc-list-item img');
+            if (images.length > 0) {
+                const randomImages = Array.from(document.querySelectorAll('.mc-random-blocks'));
+                randomImages.forEach(randomBlockImage => {
+                    let randomImage;
+                    do {
+                        randomImage = images[Math.floor(Math.random() * images.length)];
+                        const img = new Image();
+                        img.src = randomImage.src;
+                        if (img.width === img.height) {
+                            break;
+                        }
+                    } while (true);
+                    randomBlockImage.src = randomImage.src;
+                });
+            }
+        }, 10);
+    </script>
+    <script>
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    </script>
+    <script>
+        document.getElementById('fetchHtml').addEventListener('click', async () => {
+            const url = 'https://minecraft.wiki/w/Block#List_of_blocks';
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const headline = doc.querySelector('span.mw-headline#List_of_blocks');
+
+                if (headline) {
+                    const ulElement = headline.parentElement.nextElementSibling.firstElementChild;
+
+                    if (ulElement && ulElement.tagName === 'UL') {
+                        const listItems = ulElement.getElementsByTagName("li");
+
+                        const transformListItem = (li) => {
+                            const imgElement = li.querySelector("img");
+                            const linkElement = li.querySelector("a:not(.mw-file-description)");
+
+                            if (imgElement && linkElement) {
+                                return {
+                                    name: linkElement.textContent,
+                                    link: `https://minecraft.wiki${linkElement.getAttribute("href")}`,
+                                    image: imgElement.getAttribute("srcset")
+                                    ? `https://minecraft.wiki${imgElement.getAttribute("srcset").split(" ")[0]}`
+                                    : 'default-image-url.jpg'
+                                };
+                            }
+                            return null;
+                        };
+
+                        const transformedItems = Array.from(listItems)
+                            .map(transformListItem)
+                            .filter(item => item !== null);
+
+                        const resultElement = document.getElementById("result");
+                        resultElement.innerHTML = transformedItems.map(item => `
+                            <div class="mc-list-item">
+                            <a href="${item.link}" class="mc-list-item-link">${item.name}</a>
+                            <img src="${item.image}" class="mc-list-item-image" />
+                            </div>
+                        `).join("\n");
+                    } else {
+                        throw new Error('No <ul> element found after the headline.');
+                    }
+                } else {
+                    throw new Error('Headline with id "List_of_blocks" not found.');
+                }
+            } catch (error) {
+                console.error('Error fetching or processing the HTML:', error);
+                const outputElement = document.getElementById('output');
+                outputElement.style.display = 'block';
+                outputElement.textContent = 'Failed to fetch or process the HTML.';
+            }
+        });
+    </script>
+</body>
+</html>
