@@ -262,15 +262,12 @@
             <div class="sidebar-content">
                 <img src="title.png" class="longshadow">
                 <p>Welcome to <b>Minecraft quizzer</b>, where you can refine your knowledge on the game we all know and love.</p>
-                <a href="block-guesser-from-image.html" class="mc-list-item-link different-webpage">Block Guesser - Click me!</a>
+                <a href="block-guesser-from-image.html" class="mc-list-item-link different-webpage">Block Guesser minigame!</a>
             </div>
         </div>
     </div>
     <!-- Main content wrapper -->
     <div class="content-wrapper">
-        <p>
-            Move your cursor to the left to open the sidebar! (Please note this project is a work in progress.)
-        </p>
     </div>
     <script>
         // Update the CSS variable on scroll
@@ -306,174 +303,8 @@
                 }, 2000); // Wait for the transition to complete before removing
             }, 3000); // Display the popup for 3 seconds
         }
-
-        /** @type {Array<any>} */
-        let blocks = []; // To store the blocks fetched from the wiki
-        /** @type {any} */
-        let currentBlock = null; // To store the current block for the game
-
-        let questionsCorrect = 0;
-        let questionsIncorrect = 0;
-
-        let loadBlockList = async () => {
-            const url = 'https://minecraft.wiki/w/Block#List_of_blocks';
-
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const headline = doc.querySelector('span.mw-headline#List_of_blocks');
-
-                if (headline) {
-                    const ulElement = headline.parentElement.nextElementSibling.firstElementChild;
-
-                    if (ulElement && ulElement.tagName === 'UL') {
-                        const listItems = ulElement.getElementsByTagName("li");
-
-                        const transformListItem = (li) => {
-                            const imgElement = li.querySelector("img");
-                            const linkElement = li.querySelector("a:not(.mw-file-description)");
-
-                            if (imgElement && linkElement) {
-                                return {
-                                    name: linkElement.textContent.trim(),
-                                    image: imgElement.getAttribute("srcset")
-                                        ? `https://minecraft.wiki${imgElement.getAttribute("srcset").split(" ")[0]}`
-                                        : 'default-image-url.jpg',
-                                    width: imgElement.naturalWidth,
-                                    height: imgElement.naturalHeight
-                                };
-                            }
-                            return null;
-                        };
-
-                        blocks = Array.from(listItems)
-                            .map(transformListItem)
-                            .filter(item => item !== null);
-
-                        startNewQuestion();
-                    } else {
-                        throw new Error('No <ul> element found after the headline.');
-                    }
-                } else {
-                    throw new Error('Headline with id "List_of_blocks" not found.');
-                }
-            } catch (error) {
-                console.error('Error fetching or processing the HTML:', error);
-                const outputElement = document.getElementById('output');
-                outputElement.style.display = 'block';
-                outputElement.textContent = 'Failed to fetch or process the HTML.';
-            }
-        }
-
-        document.getElementById('fetchHtml').addEventListener('click', async () => {
-            console.log("Hi")
-            console.log(`Class list: ${document.getElementById('fetchHtml').classList}`)
-            loadBlockList();
-        });
-
-        function refreshInput() {
-            timer = 15;
-            timerIncrement = -0.75;
-            const trim = (trimFunction) => {
-                document.getElementById('guessInput').value = document.getElementById('guessInput').value.slice(0, -1);
-                if (Math.round(timer) < 2) {
-                    document.getElementById('guessInput').value = "";
-                } else {
-                    timer += timerIncrement;
-                    if (document.getElementById('guessInput').value != "") {
-                        timer -= 1;
-                        setTimeout(() => {
-                            trimFunction(trimFunction);
-                        }, Math.round(timer));
-                    }
-                }
-            }
-            trim(trim);
-        }
-        function startNewQuestion() {
-            if (blocks.length == 0) {
-                addPopup("No blocks available. Please fetch the blocks first.", "red")
-                return;
-            }
-
-            currentBlock = blocks[Math.floor(Math.random() * blocks.length)];
-
-            console.log(`Block: ${currentBlock.name}`)
-
-            // Display the block image
-            const blockDisplay = document.getElementById('block-display');
-            blockDisplay.style.display = ""
-            blockDisplay.src = currentBlock.image
-
-            // Clear previous input
-            refreshInput()
-        }
-
-        function questioncorrect(question) {
-            
-        }
-
-        function questionIncorrect(question) {
-            
-        }
-
-        submitAnswer = () => {
-            const userGuess = document.getElementById('guessInput').value.trim();
-            if (!currentBlock) {
-                addPopup('No block to guess. Please click "New question" first.', "red");
-                return;
-            }
-            const correctName = currentBlock.name.toLowerCase().trim();
-            const userGuessNormalized = userGuess.toLowerCase().trim();
-
-            previous_guess = userGuessNormalized
-            if (userGuessNormalized == "") {
-            } else if (correctName.includes("waxed") && userGuessNormalized === correctName.replace("waxed ", "")) {
-                addPopup(`Correct! <img src="${currentBlock.image}"> ${currentBlock.name}. The block was actually waxed, but that doesn't matter.`, "green");
-                startNewQuestion(); // Start a new question
-            } else if (correctName.includes("petrified") && userGuessNormalized === correctName.replace("petrified ", "")) {
-                addPopup(`Correct! <img src="${currentBlock.image}"> ${currentBlock.name}. The block was actually petrified, but that doesn't matter.`, "green");
-                startNewQuestion(); // Start a new question
-            } else if (userGuessNormalized === correctName) {
-                addPopup(`Correct! The block was <img src="${currentBlock.image}"> ${currentBlock.name}.`, "green");
-                startNewQuestion(); // Start a new question
-            } else if (userGuessNormalized === "give up".toLowerCase()) {
-                addPopup(`You give up. The block was <img src="${currentBlock.image}"> ${currentBlock.name}. Try again with the next one!`, "red");
-                startNewQuestion();
-            } else {
-                currentBlockImage = undefined
-                currentBlockName = undefined
-                blocks.forEach((currentBlockIndex) => {
-                    if (currentBlockIndex.name.toLowerCase().trim() === userGuessNormalized) {
-                        currentBlockImage = currentBlockIndex.image
-                        currentBlockName = currentBlockIndex.name
-                    }
-                });
-                if (currentBlockImage) {
-                    addPopup(`Wrong! You guessed <img src="${currentBlockImage}"> ${currentBlockName}. Try again.`, "red");
-                } else {
-                    addPopup(`Wrong! Your guess was ${userGuess}. Try again.`, "red");
-                }
-                refreshInput()
-            }
-        };
-
-        document.getElementById('submitGuess').addEventListener('click', () => {
-            submitAnswer();
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                submitAnswer()
-            }
-        });
-        
+    </script>
+    <script>
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const toggleSidebar = document.getElementById('toggleSidebar');
@@ -504,23 +335,6 @@
                 }
             }
         });
-
-        // Function to change the mc-random-blocks images every second
-        setInterval(() => {
-            const randomImages = Array.from(document.querySelectorAll('.mc-random-blocks'));
-            if (blocks.length > 0) {
-                randomImages.forEach(randomBlockImage => {
-                    let randomBlock;
-                    randomBlock = blocks[Math.floor(Math.random() * blocks.length)];
-                    do {
-                        randomBlock = blocks[Math.floor(Math.random() * blocks.length)];
-                        console.log(`Chose a image with dimensions ${randomBlock.width}, ${randomBlock.height}`)
-                    } while (randomBlock.width !== randomBlock.height); // Ensure only square blocks are chosen
-                    randomBlockImage.src = randomBlock.image;
-                    randomBlockImage.alt = randomBlock.name;
-                });
-            }
-        }, 10); // Change images every second
     </script>
 </body>
 </html>
