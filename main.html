@@ -3,43 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch HTML</title>
+    <title>Minecraft Quizzer - Block guesser</title>
+    <link rel="icon" type="image/x-icon" href="icon.png">
     <style>
+        :root {
+            --scroll-y: 0px; /* Default value */
+        }
+        .no-drag {
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+                
+        /* width */
+        ::-webkit-scrollbar {
+            width: 16px;
+            margin-right: 12px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #58585a;
+            border-left: 4px solid #232324;
+            border-right: 4px solid #232324;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #e6e8eb;
+            border-bottom: 16px solid #58585a;
+            outline: 4px solid #000000;
+            outline-offset: -4px;
+            width: 8px;
+            background-clip: padding-box;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fefefe;
+        }
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:active {
+            background: #d3d5d7;
+        }
+
         /* Sidebar styles */
         .sidebar {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
-            height: 100%;
+            transform: translateX(-100%);
+            height: calc(100% - 31px - max(0px, 81px - var(--scroll-y)));
             width: 60px;
-            background-color: #2f4f4f;
+            background-color: #232324;
+            border: 4px solid #313233;
+            outline: 4px solid #000000;
+            margin: 12px;
             overflow-x: hidden;
-            transition: width 0.3s;
-            z-index: 1000;
+            transition: 0.3s ease;
+            z-index: 9;
         }
 
         .sidebar.open {
             width: 250px;
+            transform: translateX(0%);
         }
 
-        .sidebar .toggle-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: #235b12;
-            color: white;
-            border: none;
-            padding: 10px;
+        .sidebar .mc-button-green {
+            width: 20px;
+            height: 20px;
             cursor: pointer;
             font-family: 'MinecraftTen';
         }
 
         .sidebar-content {
-            margin-top: 50px;
             display: none;
+            width: calc(100% - 20px);
+            max-width: 100%;
+            max-height: 100%;
             padding: 10px;
             color: white;
             font-family: 'Minecraft';
+            align-items: center;
+        }
+        .sidebar-content img {
+            width: 100%;
+            object-fit: contain;
         }
 
         .sidebar.open .sidebar-content {
@@ -48,19 +99,40 @@
 
         /* Main content wrapper */
         .content-wrapper {
-            margin-left: 60px;
-            transition: margin-left 0.3s;
+            margin: 12px;
+            margin-left: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
         }
 
         .sidebar.open ~ .content-wrapper {
             margin-left: 250px;
         }
-
+        html {
+            width: 100%;
+            height: 100%;
+        }
         body {
             font-family: 'Minecraft', 'MinecraftTen';
+            background-color: #48494a;
+            overflow-x: hidden;
+            margin: 0px;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+        }
+
+        #game {
+            height: 80px;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: stretch;
         }
     </style>
     <link rel="stylesheet" href="minecraft-buttons.css">
+    <link rel="stylesheet" href="minecraft-textbox.css">
     <style>
         @font-face {
             font-family: 'MinecraftTen';
@@ -70,10 +142,6 @@
         @font-face {
             font-family: 'Minecraft';
             src: url('minecraft.otf') format('opentype');
-        }
-        .mc {
-            font-family: 'MinecraftTen';
-            font-size: larger;
         }
         .mc-list-item {
             padding: 0 10px;
@@ -96,70 +164,158 @@
             height: 60px;
             filter: drop-shadow(15px 15px 0px #00000080);
         }
-
-        body {
-            font-family: 'Minecraft', 'MinecraftTen';
+    </style>
+    <style>
+        #block-display {
+            width: 80px;
+            height: 80px;
+        }
+        #popup-container {
+            position: absolute;
+            color: white;
+            top: 10%;
+            right: 0px;
+            transition: 1s ease-out;
+            z-index: 10;
+            pointer-events: none; /* Makes the popup container non-interactive */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .popup {
+            padding-left: 10px;
+            padding-right: 10px;
+            max-height: 70px;
+            min-height: 70px;
+            display: inline-flex;
+            align-items: center;
+            align-self: stretch;
+            height: auto;
+            pointer-events: none; /* Ensures the popup itself is also non-interactive */
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            transition: 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+        .popup.red {
+            background-color: #bc0000ff;
+            border-left: 5px solid #900000ff;
+        }
+        .popup.green {
+            background-color: rgb(13, 188, 0);
+            border-left: 5px solid rgb(14, 144, 0);
+        }
+        #topbar {
+            padding: 10px;
+            background-color: #e6e8eb;
+            border-bottom: 16px solid #b1b2b5;
+            outline: 4px solid #1e1e1e;
+            max-height: 40px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            overflow: hidden;
+        }
+        #topbar img {
+            max-width: inherit;
+            max-height: inherit;
+            height: inherit;
+            width: inherit;
+        }
+        .sidebar-content p {
+            text-indent: 10%;
+        }
+        #transitionshadow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            transition: 1s cubic-bezier(0.075, 0.82, 0.165, 1);
+            opacity: 1;
+            z-index: 99999999999999;
         }
     </style>
 </head>
 <body>
+    <div id="transitionshadow"></div>
+    <script>
+        setTimeout(() => {
+            document.getElementById("transitionshadow").style.opacity = "0"
+            document.getElementById("transitionshadow").style.zIndex = "-1"
+        }, 500);
+        let ele = document.getElementsByClassName("mc-list-item-link different-webpage");
+        for (let index = 0; index < ele.length; index++) {
+            console.log(ele[index]);
+            console.log("hi");
+        }
+    </script>
+    <div id="popup-container"></div>
+    <div id="topbar">
+        <button class="mc-button-green small-button" id="toggleSidebar">☰</button>
+        <img src="title.png">
+    </div>
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="toggle-btn" id="toggleSidebar">☰</button>
-        <div class="sidebar-content">
-            <p>Sidebar Content</p>
-            <ul>
-                <li><a href="#" class="mc-list-item-link">Link 1</a></li>
-                <li><a href="#" class="mc-list-item-link">Link 2</a></li>
-                <li><a href="#" class="mc-list-item-link">Link 3</a></li>
-            </ul>
+    <div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <img src="title.png" class="longshadow">
+                <p>Welcome to <b>Minecraft quizzer</b>, where you can refine your knowledge on the game we all know and love.</p>
+                <a href="block-guesser-from-image.html" class="mc-list-item-link different-webpage">Block Guesser - Click me!</a>
+            </div>
         </div>
     </div>
     <!-- Main content wrapper -->
     <div class="content-wrapper">
-        <button class="mc mc-button-green" id="fetchHtml">
-            <div style="transform: translateY(-4px); display: flex; flex-direction: row; justify-content: center; align-items: center;">
-                <img class="mc-random-blocks">
-                <p style="margin: 0 10px;">New question</p>
-                <img class="mc-random-blocks">
-            </div>
-        </button>
-        <div id="result"></div>
-        <pre id="output" style="display: none;"></pre>
+        <p>
+            Move your cursor to the left to open the sidebar! (Please note this project is a work in progress.)
+        </p>
     </div>
     <script>
-        // Function to change the mc-random-blocks images every second
-        setInterval(() => {
-            const resultDiv = document.getElementById('result');
-            const images = resultDiv.querySelectorAll('.mc-list-item img');
-            if (images.length > 0) {
-                const randomImages = Array.from(document.querySelectorAll('.mc-random-blocks'));
-                randomImages.forEach(randomBlockImage => {
-                    let randomImage;
-                    do {
-                        randomImage = images[Math.floor(Math.random() * images.length)];
-                        const img = new Image();
-                        img.src = randomImage.src;
-                        if (img.width === img.height) {
-                            break;
-                        }
-                    } while (true);
-                    randomBlockImage.src = randomImage.src;
-                });
-            }
-        }, 10);
-    </script>
-    <script>
-        // Sidebar toggle functionality
-        const sidebar = document.getElementById('sidebar');
-        const toggleSidebar = document.getElementById('toggleSidebar');
-
-        toggleSidebar.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+        // Update the CSS variable on scroll
+        window.addEventListener('scroll', () => {
+            document.documentElement.style.setProperty('--scroll-y', `${window.scrollY}px`);
         });
-    </script>
-    <script>
-        document.getElementById('fetchHtml').addEventListener('click', async () => {
+        // Update the CSS variable on scroll
+        window.addEventListener('keydown', () => {
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                try {
+                    previous_guess;
+                    temp_previousvalue = previous_guess;
+                    previous_guess = document.getElementById('guessInput').value;
+                    document.getElementById('guessInput').value = temp_previousvalue;
+                } catch (ReferenceError) {}
+            }
+        });
+        function addPopup(html_to_add, classOfButton) {
+            const popupContainer = document.getElementById('popup-container');
+            const popup = document.createElement('div');
+            popup.className = `popup ${classOfButton}`;
+            popup.innerHTML = html_to_add;
+
+            // Add the popup to the start of the container
+            popupContainer.prepend(popup);
+
+            // Set a timeout to transition the popup off screen and remove it
+            setTimeout(() => {
+                popup.style.transform = 'translateX(100%)';
+                popup.style.opacity = '0';
+                setTimeout(() => {
+                    popup.remove();
+                }, 2000); // Wait for the transition to complete before removing
+            }, 3000); // Display the popup for 3 seconds
+        }
+
+        /** @type {Array<any>} */
+        let blocks = []; // To store the blocks fetched from the wiki
+        /** @type {any} */
+        let currentBlock = null; // To store the current block for the game
+
+        let questionsCorrect = 0;
+        let questionsIncorrect = 0;
+
+        let loadBlockList = async () => {
             const url = 'https://minecraft.wiki/w/Block#List_of_blocks';
 
             try {
@@ -185,27 +341,22 @@
 
                             if (imgElement && linkElement) {
                                 return {
-                                    name: linkElement.textContent,
-                                    link: `https://minecraft.wiki${linkElement.getAttribute("href")}`,
+                                    name: linkElement.textContent.trim(),
                                     image: imgElement.getAttribute("srcset")
-                                    ? `https://minecraft.wiki${imgElement.getAttribute("srcset").split(" ")[0]}`
-                                    : 'default-image-url.jpg'
+                                        ? `https://minecraft.wiki${imgElement.getAttribute("srcset").split(" ")[0]}`
+                                        : 'default-image-url.jpg',
+                                    width: imgElement.naturalWidth,
+                                    height: imgElement.naturalHeight
                                 };
                             }
                             return null;
                         };
 
-                        const transformedItems = Array.from(listItems)
+                        blocks = Array.from(listItems)
                             .map(transformListItem)
                             .filter(item => item !== null);
 
-                        const resultElement = document.getElementById("result");
-                        resultElement.innerHTML = transformedItems.map(item => `
-                            <div class="mc-list-item">
-                            <a href="${item.link}" class="mc-list-item-link">${item.name}</a>
-                            <img src="${item.image}" class="mc-list-item-image" />
-                            </div>
-                        `).join("\n");
+                        startNewQuestion();
                     } else {
                         throw new Error('No <ul> element found after the headline.');
                     }
@@ -218,7 +369,158 @@
                 outputElement.style.display = 'block';
                 outputElement.textContent = 'Failed to fetch or process the HTML.';
             }
+        }
+
+        document.getElementById('fetchHtml').addEventListener('click', async () => {
+            console.log("Hi")
+            console.log(`Class list: ${document.getElementById('fetchHtml').classList}`)
+            loadBlockList();
         });
+
+        function refreshInput() {
+            timer = 15;
+            timerIncrement = -0.75;
+            const trim = (trimFunction) => {
+                document.getElementById('guessInput').value = document.getElementById('guessInput').value.slice(0, -1);
+                if (Math.round(timer) < 2) {
+                    document.getElementById('guessInput').value = "";
+                } else {
+                    timer += timerIncrement;
+                    if (document.getElementById('guessInput').value != "") {
+                        timer -= 1;
+                        setTimeout(() => {
+                            trimFunction(trimFunction);
+                        }, Math.round(timer));
+                    }
+                }
+            }
+            trim(trim);
+        }
+        function startNewQuestion() {
+            if (blocks.length == 0) {
+                addPopup("No blocks available. Please fetch the blocks first.", "red")
+                return;
+            }
+
+            currentBlock = blocks[Math.floor(Math.random() * blocks.length)];
+
+            console.log(`Block: ${currentBlock.name}`)
+
+            // Display the block image
+            const blockDisplay = document.getElementById('block-display');
+            blockDisplay.style.display = ""
+            blockDisplay.src = currentBlock.image
+
+            // Clear previous input
+            refreshInput()
+        }
+
+        function questioncorrect(question) {
+            
+        }
+
+        function questionIncorrect(question) {
+            
+        }
+
+        submitAnswer = () => {
+            const userGuess = document.getElementById('guessInput').value.trim();
+            if (!currentBlock) {
+                addPopup('No block to guess. Please click "New question" first.', "red");
+                return;
+            }
+            const correctName = currentBlock.name.toLowerCase().trim();
+            const userGuessNormalized = userGuess.toLowerCase().trim();
+
+            previous_guess = userGuessNormalized
+            if (userGuessNormalized == "") {
+            } else if (correctName.includes("waxed") && userGuessNormalized === correctName.replace("waxed ", "")) {
+                addPopup(`Correct! <img src="${currentBlock.image}"> ${currentBlock.name}. The block was actually waxed, but that doesn't matter.`, "green");
+                startNewQuestion(); // Start a new question
+            } else if (correctName.includes("petrified") && userGuessNormalized === correctName.replace("petrified ", "")) {
+                addPopup(`Correct! <img src="${currentBlock.image}"> ${currentBlock.name}. The block was actually petrified, but that doesn't matter.`, "green");
+                startNewQuestion(); // Start a new question
+            } else if (userGuessNormalized === correctName) {
+                addPopup(`Correct! The block was <img src="${currentBlock.image}"> ${currentBlock.name}.`, "green");
+                startNewQuestion(); // Start a new question
+            } else if (userGuessNormalized === "give up".toLowerCase()) {
+                addPopup(`You give up. The block was <img src="${currentBlock.image}"> ${currentBlock.name}. Try again with the next one!`, "red");
+                startNewQuestion();
+            } else {
+                currentBlockImage = undefined
+                currentBlockName = undefined
+                blocks.forEach((currentBlockIndex) => {
+                    if (currentBlockIndex.name.toLowerCase().trim() === userGuessNormalized) {
+                        currentBlockImage = currentBlockIndex.image
+                        currentBlockName = currentBlockIndex.name
+                    }
+                });
+                if (currentBlockImage) {
+                    addPopup(`Wrong! You guessed <img src="${currentBlockImage}"> ${currentBlockName}. Try again.`, "red");
+                } else {
+                    addPopup(`Wrong! Your guess was ${userGuess}. Try again.`, "red");
+                }
+                refreshInput()
+            }
+        };
+
+        document.getElementById('submitGuess').addEventListener('click', () => {
+            submitAnswer();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                submitAnswer()
+            }
+        });
+        
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+
+        hasOpenedWithCursor = true;
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            hasOpenedWithCursor = false;
+        });
+        sidebar.addEventListener('mouseenter', () => {
+            sidebar.classList.add('open');
+            hasOpenedWithCursor = true;
+        });
+        sidebar.addEventListener('mouseleave', (event) => {
+            // Check if the mouse X-coordinate is inside the sidebar
+            const sidebarRect = sidebar.getBoundingClientRect();
+            if (event.clientX > sidebarRect.left) {
+                sidebar.classList.remove('open');
+            }
+        });
+        document.addEventListener('mousemove', (event) => {
+            if (hasOpenedWithCursor) {
+                /** @type {DOMRect} */
+                const sidebarRect = sidebar.getBoundingClientRect();
+                if (sidebarRect.bottom < event.clientY || sidebarRect.top > event.clientY) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // Function to change the mc-random-blocks images every second
+        setInterval(() => {
+            const randomImages = Array.from(document.querySelectorAll('.mc-random-blocks'));
+            if (blocks.length > 0) {
+                randomImages.forEach(randomBlockImage => {
+                    let randomBlock;
+                    randomBlock = blocks[Math.floor(Math.random() * blocks.length)];
+                    do {
+                        randomBlock = blocks[Math.floor(Math.random() * blocks.length)];
+                        console.log(`Chose a image with dimensions ${randomBlock.width}, ${randomBlock.height}`)
+                    } while (randomBlock.width !== randomBlock.height); // Ensure only square blocks are chosen
+                    randomBlockImage.src = randomBlock.image;
+                    randomBlockImage.alt = randomBlock.name;
+                });
+            }
+        }, 10); // Change images every second
     </script>
 </body>
 </html>
